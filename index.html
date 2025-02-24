@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageFX Prompt Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+        #container {
+            max-width: 600px;
+            margin: auto;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            white-space: pre-wrap;
+            text-align: left;
+            position: relative;
+        }
+        #copyButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px;
+            font-size: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        #copyButton:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h2>ImageFX Prompt Generator</h2>
+        <label for="apiKey">Enter API Key:</label>
+        <input type="text" id="apiKey" placeholder="Enter OpenRouter API Key">
+        <button onclick="storeApiKey()">Save API Key</button>
+        <br>
+        <label for="userInput">Enter a simple description:</label>
+        <input type="text" id="userInput" placeholder="e.g. smiling at the gym">
+        <button onclick="generatePrompt()">Generate</button>
+        <div id="output" style="display: none;">
+            <button id="copyButton">Copy</button>
+            <p id="generatedText"></p>
+        </div>
+    </div>
+    
+    <script>
+        function storeApiKey() {
+            const apiKey = document.getElementById("apiKey").value;
+            sessionStorage.setItem("openrouterApiKey", apiKey);
+            alert("API Key saved successfully!");
+        }
+
+        async function generatePrompt() {
+            const apiKey = sessionStorage.getItem("openrouterApiKey");
+            if (!apiKey) {
+                alert("Please enter your API key first.");
+                return;
+            }
+            
+            let userInput = document.getElementById("userInput").value;
+            let requestBody = {
+                model: "google/learnlm-1.5-pro-experimental:free",
+                prompt: `Generate a detailed photorealistic image prompt for a beautiful Japanese chubby muscular female bodybuilder: ${userInput}`,
+                max_tokens: 100
+            };
+            
+            try {
+                let response = await fetch("https://openrouter.ai/api/generate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                let data = await response.json();
+                let enhancedPrompt = data.choices[0].text.trim();
+                
+                document.getElementById("generatedText").innerText = enhancedPrompt;
+                document.getElementById("output").style.display = "block";
+                document.getElementById("output").scrollIntoView({ behavior: "smooth" });
+            } catch (error) {
+                console.error("Error generating prompt: ", error);
+                alert("Failed to generate prompt. Please check your API key and internet connection.");
+            }
+        }
+
+        document.getElementById("copyButton").addEventListener("click", function() {
+            let text = document.getElementById("generatedText").innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Copied to clipboard!");
+            }).catch(err => {
+                console.error("Error copying text: ", err);
+            });
+        });
+    </script>
+</body>
+</html>
